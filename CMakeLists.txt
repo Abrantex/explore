@@ -135,3 +135,6 @@ target_link_libraries(talker ${catkin_LIBRARIES})
 
 add_executable(random_walk_sim src/random_walk.cpp)
 target_link_libraries(random_walk_sim ${catkin_LIBRARIES})
+
+add_executable(random_walk_real src/random_walk_real.cpp)
+target_link_libraries(random_walk_real ${catkin_LIBRARIES})
