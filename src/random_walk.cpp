@@ -1,7 +1,7 @@
 /*
  * Author: Matheus Abrantes
  * Created: 03/26/18
- * Last Modification: 04/16/18
+ * Last Modification: 08/20/18
  *
  *
  * Based on robot cleanner in the course CS460 (/tuto_ws/src/teste_turlesim/robot_cleaner.cpp)
@@ -38,17 +38,17 @@ sensor_msgs::LaserScan the_scan;
 int free_pass = 1;
 
 
-const float x_min = -6.0;
-const float y_min = -6.0;
-const float x_max = 6.0;
-const float y_max = 6.0;
+const float x_min = -2.0;
+const float y_min = -2.0;
+const float x_max = 2.0;
+const float y_max = 2.0;
 
 const double PI = 3.14159265359;
 
 
 //pontos recentemente visitados. 
-float past_x[3] = {0.0,0.0,0.0};
-float past_y[3] = {0.0,0.0,0.0};
+float past_x[5] = {0.0,0.0,0.0,0.0,0.0};
+float past_y[5] = {0.0,0.0,0.0,0.0,0.0};
 
 
 double degrees2radians(double angle_in_degrees);
@@ -111,9 +111,13 @@ int main(int argc, char **argv)
 			gera_ponto(0);
 
 			if(abs(goal_pose.x - past_x[0]) > 0.5 && abs(goal_pose.y - past_y[0]) > 0.5) {
-				if(abs(goal_pose.x - past_x[1]) > 0.25 && abs(goal_pose.y - past_y[1])> 0.25 ){
-					if(abs(goal_pose.x - past_x[2]) > 0.2 && abs(goal_pose.y - past_y[2]) > 0.2 ){
-						condicao = 1;
+				if(abs(goal_pose.x - past_x[1]) > 0.5 && abs(goal_pose.y - past_y[1])> 0.5 ){
+					if(abs(goal_pose.x - past_x[2]) > 0.25 && abs(goal_pose.y - past_y[2]) > 0.25 ){
+					  	if(abs(goal_pose.x - past_x[3]) > 0.15 && abs(goal_pose.y - past_y[3]) > 0.15 ){
+							if(abs(goal_pose.x - past_x[4]) > 0.1 && abs(goal_pose.y - past_y[4]) > 0.1 ){
+								condicao = 1;
+							}
+						}
 					}
 			
 				}
@@ -143,12 +147,15 @@ int main(int argc, char **argv)
 		past[0] = robot  //isso pois pode ocorrer colisao
 
 		*/
-
+		past_x[4] = past_x[3];
+		past_x[3] = past_x[2];
 		past_x[2] = past_x[1];
 		past_x[1] = past_x[0];
 		past_x[0] = robot_odom.pose.pose.position.x;
 		
 
+		past_y[4] = past_y[3];
+		past_y[3] = past_y[2];
 		past_y[2] = past_y[1];
 		past_y[1] = past_y[0];
 		past_y[0] = robot_odom.pose.pose.position.y;

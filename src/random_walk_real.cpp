@@ -19,6 +19,7 @@
 #include <sstream>
 #include "nav_msgs/Odometry.h"
 #include "sensor_msgs/LaserScan.h"
+#include "p2os_msgs/SonarArray.h"
 #include <tf/tf.h>
 
 using namespace std;
@@ -34,6 +35,7 @@ turtlesim::Pose goal_pose;
 nav_msgs::Odometry odom_goal;
 ros::Subscriber scan_subscriber;
 sensor_msgs::LaserScan the_scan;
+p2os_msgs::SonarArray sonar_array;
 
 int free_pass = 1;
 
@@ -54,6 +56,7 @@ float past_y[3] = {0.0,0.0,0.0};
 double degrees2radians(double angle_in_degrees);
 void poseCallback(const nav_msgs::Odometry::ConstPtr & pose_message);
 void goalCallback(const sensor_msgs::LaserScan::ConstPtr& msg);
+void sonarCallback(const p2os_msgs::SonarArray::ConstPtr& );
 
 
 double getDistance(double x1, double y1, double x2, double y2);
@@ -61,6 +64,9 @@ void moveGoal(double distance_tolerance);
 
 // funcao que utiliza o laser_scan para verificar caminho a frente do robo
 void check_pass(void);
+
+//essa funcao utiliza o sonar para verificar o caminho a frente
+void check_pass_sonar(void);
 
 void rotate (float angular_tolerance);
 void move(float error_tolerance);
@@ -86,6 +92,9 @@ int main(int argc, char **argv)
 	scan_subscriber = n.subscribe("/kinect_scan", 10, goalCallback);
 	velocity_publisher = n.advertise<geometry_msgs::Twist>("/cmd_vel", 1000);
 	pose_subscriber = n.subscribe("/pose", 10, poseCallback);
+	pose_subscriber = n.subscribe("sonar", 10, sonarCallback);
+	//ros::Subscriber op2 = nh.subscribe<sensor_msgs::PointCloud2> ("points_t1", 1, cloud_cb);
+	
 	
 
 	ros::Rate loop_rate(0.5);
@@ -229,6 +238,7 @@ void move(float error_tolerance){
 
 		//colision avoidance
 		check_pass();
+		check_pass_sonar();
 		if(free_pass == 0){
 			return;
 		}
@@ -239,7 +249,7 @@ void move(float error_tolerance){
 		velocity_publisher.publish(vel_msg);
 		x_error = getDistance(robot_odom.pose.pose.position.x,robot_odom.pose.pose.position.y,goal_pose.x,goal_pose.y);
 		
-		vel_msg.linear.x = 0.6*x_error;
+		vel_msg.linear.x = 0.2*x_error;
 
 
 		//SATURATION
@@ -387,6 +397,15 @@ void goalCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
 }
 
 
+void sonarCallback(const p2os_msgs::SonarArray::ConstPtr& msg){
+
+	sonar_array = *msg;
+
+
+}
+
+
+
 
 
 
@@ -436,8 +455,23 @@ void check_pass(void){
 
     }
 
+}
 
 
+void check_pass_sonar(void){
+  
+	int N = 8, count =0;
 
+	float range,threshold;
+	threshold = 0.8;
 
+	for(count = 0;count<8;count++){
+	//de um a 8
+		range = sonar_array.ranges[count];
+		if (range > threshold){
+		//se distancia[i] maior que limiar
+			free_pass = 0;
+		}
+	}
+	
 }

@@ -138,3 +138,9 @@ target_link_libraries(random_walk_sim ${catkin_LIBRARIES})
 
 add_executable(random_walk_real src/random_walk_real.cpp)
 target_link_libraries(random_walk_real ${catkin_LIBRARIES})
+
+add_executable(sonar_list src/sonar_list.cpp)
+target_link_libraries(sonar_list ${catkin_LIBRARIES})
+
+add_executable(longest_path src/longest_path.cpp)
+target_link_libraries(longest_path ${catkin_LIBRARIES})
