@@ -50,14 +50,15 @@ int main(int argc, char **argv)
 
   std::string map_frame_id_;
 
-  int height = 20;
-  int width = 20;
+  int height = 2;
+  int width = 2;
   double resolution = 1.0;
 
 
 
   while(ros::ok()){
-    map_frame_id_ = ros::this_node::getName() + "/local_map";
+    //map_frame_id_ = ros::this_node::getName() + "/local_map";
+    map_frame_id_ = "local_map";
     map_.header.frame_id = map_frame_id_;
     map_.info.width = width;
     map_.info.height = height;
@@ -74,30 +75,7 @@ int main(int argc, char **argv)
     loop_rate.sleep();
   }
 
-  /**
-   * A count of how many messages we have sent. This is used to create
-   * a unique string for each message.
-   */
-  /**
-  int count = 0;
-  while (ros::ok())
-  {
-    std_msgs::String msg;
-
-    std::stringstream ss;
-    ss << "hello world " << count;
-    msg.data = ss.str();
-
-    ROS_INFO("%s", msg.data.c_str());
-
-    chatter_pub.publish(msg);
-
-    ros::spinOnce();
-
-    loop_rate.sleep();
-    ++count;
-  }
-  */
+ 
 
   return 0;
 }

@@ -1,13 +1,14 @@
 /*
  * Author: Matheus Abrantes
  * Created: 03/26/18
- * Last Modification: 08/20/18
+ * Last Modification: 04/16/18
  *
  *
  * Based on robot cleanner in the course CS460 (/tuto_ws/src/teste_turlesim/robot_cleaner.cpp)
  * Random walk of robot. 
  *
  *  NOT SUPORT OF OBSTACLE AVOID, USE FOR SIMULATION ONLY!!! THE ROBOT MAY COLIDE.
+ *  BACKUP 5- aqui ainda tem o código de movimentação linear a rotacional simultâneas
  * 
  *
  */
@@ -40,17 +41,12 @@ sensor_msgs::LaserScan the_scan;
 int free_pass = 1;
 
 
-const float x_min = -2.0;
-const float y_min = -2.0;
-const float x_max = 2.0;
-const float y_max = 2.0;
+const float x_min = -3.0;
+const float y_min = -3.0;
+const float x_max = 3.0;
+const float y_max = 3.0;
 
 const double PI = 3.14159265359;
-
-
-//pontos recentemente visitados. 
-float past_x[10] = {0.0,0.0,0.0,0.0,0.0};
-float past_y[10] = {0.0,0.0,0.0,0.0,0.0};
 
 
 double degrees2radians(double angle_in_degrees);
@@ -61,19 +57,30 @@ void goalCallback(const sensor_msgs::LaserScan::ConstPtr& msg);
 double getDistance(double x1, double y1, double x2, double y2);
 void moveGoal(double distance_tolerance);
 
+//alternativa para moveGoal.
+void move_both(double distance_tolerance);
+
 // funcao que utiliza o laser_scan para verificar caminho a frente do robo
 void check_pass(void);
 
 void rotate (float angular_tolerance);
 void move(float error_tolerance);
+void move_and_rotate(void);
 
 
 void gera_ponto(int);
+
+
+//pontos recentemente visitados. 
+float past_x[10] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
+float past_y[10] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
+
 
 //Atualiza o passado do robo
 void att_past(void);
 
 void write_file(int,float, float);
+
 
 int main(int argc, char **argv)
 {
@@ -84,17 +91,13 @@ int main(int argc, char **argv)
 	double distance, angle;
 	bool isForward, clockwise;
 
-	int condicao = 0;
-
-	double limPast = 0.1;
+	float angulo_vinda  = 0.0;
 
 	int Goal_Count = 1;
-
 	
 	scan_subscriber = n.subscribe("/kinect_scan", 10, goalCallback);
 	velocity_publisher = n.advertise<geometry_msgs::Twist>("/cmd_vel", 1000);
 	pose_subscriber = n.subscribe("/pose", 10, poseCallback);
-	
 
 	ros::Rate loop_rate(0.5);
 
@@ -114,66 +117,23 @@ int main(int argc, char **argv)
 	while(ros::ok()){
 		
 
-		condicao = 0; //comeca da condicao nao satisfeita
-		while(condicao == 0){
-			gera_ponto(0);
+		gera_ponto(1);
 
-			if(abs(goal_pose.x - past_x[0]) > limPast && abs(goal_pose.y - past_y[0]) > limPast) {
-				if(abs(goal_pose.x - past_x[1]) > limPast && abs(goal_pose.y - past_y[1])> limPast ){
-					if(abs(goal_pose.x - past_x[2]) > limPast && abs(goal_pose.y - past_y[2]) > limPast ){
-					  	if(abs(goal_pose.x - past_x[3]) > limPast && abs(goal_pose.y - past_y[3]) > limPast ){
-							if(abs(goal_pose.x - past_x[4]) > limPast && abs(goal_pose.y - past_y[4]) > limPast ){
-								condicao = 1;
-
-								write_file(Goal_Count,goal_pose.x,goal_pose.y);
-								Goal_Count++;
-								ROS_INFO("GOAL N %d",Goal_Count);
-							}
-						}
-					}
-			
-				}
-			
-			}
-
-		}
-		/*
-		enquanto condicao nao satisfeita{
-			gera_ponto;
-			se condicoes{
-				condicao satisfeita;
-			}
-		}
-		*/
-
-		//gera_ponto(0);
-
+		ROS_INFO("GOAL: %d",Goal_Count);
+		write_file(Goal_Count,goal_pose.x,goal_pose.y);
+		Goal_Count++;
 		
 		moveGoal(0.1);
-
-		/*
-		Apos a movimentacao
-		repassa pontos.
-		past[0] = robot  //isso pois pode ocorrer colisao
-		*/
-		
-		//att_past();
-
-		ROS_INFO("haha");
-
-
-
-
 		//move_both(0.1);
+
+		att_past();
+
 		loop_rate.sleep();
 
 		ros::spinOnce();
 	}
    return 0;
 }
-
-
-
 
 
 void att_past(){
@@ -187,19 +147,6 @@ void att_past(){
 
 	past_x[0] = robot_odom.pose.pose.position.x;
 	past_y[0] = robot_odom.pose.pose.position.y;
-	/*past_x[4] = past_x[3];
-	past_x[3] = past_x[2];
-	past_x[2] = past_x[1];
-	past_x[1] = past_x[0];
-	past_x[0] = robot_odom.pose.pose.position.x;
-		
-
-	past_y[4] = past_y[3];
-	past_y[3] = past_y[2];
-	past_y[2] = past_y[1];
-	past_y[1] = past_y[0];
-	past_y[0] = robot_odom.pose.pose.position.y;
-	*/
 
 }
 
@@ -207,7 +154,7 @@ void att_past(){
 void write_file(int Goal_Count,float goalX , float goalY){
 
 	ofstream myfile;
-    myfile.open ("ExploreLOG.txt",ios::app);
+    myfile.open ("L_ExploreLOG.txt",ios::app);
 
     int n;
   	
@@ -240,6 +187,7 @@ void write_file(int Goal_Count,float goalX , float goalY){
 
 
 
+
 void gera_ponto(int flag){
 
 	float angulo, raio;
@@ -254,13 +202,26 @@ void gera_ponto(int flag){
 	  	goal_pose.y = robot_odom.pose.pose.position.y +(float(rand()) / float(RAND_MAX)) *(y_max-(y_min))  +y_min; // between [y_min,y_max]
 		goal_pose.theta = 0;
 		
-
-		goal_pose.x = (float(rand()) / float(RAND_MAX)) * (x_max-(x_min)) +x_min; // between [x_min,x_max]
-	  	goal_pose.y = (float(rand()) / float(RAND_MAX)) *(y_max-(y_min))  +y_min; // between [y_min,y_max]
-		
-
 		break;
 
+		case(1):
+		//polar
+
+
+		raio = (float(rand()) / float(RAND_MAX)) *  4.0;
+		if(free_pass ==1){
+			angulo = (float(rand()) / float(RAND_MAX)) *  PI/5 - PI/10; // [-18,18]
+			angulo = 0;
+		}else{
+			do{
+				angulo = (float(rand()) / float(RAND_MAX)) *  8*PI/6 + PI/3; //[60 a 300]
+			}while( (9*PI/10)< angulo && angulo < (11*PI/10));
+		}	
+		//angulo = 0;
+		goal_pose.x = robot_odom.pose.pose.position.x + raio*cos(angulo + robot_odom.pose.pose.orientation.z);
+		goal_pose.y = robot_odom.pose.pose.position.y + raio*sin(angulo + robot_odom.pose.pose.orientation.z);
+
+		break;
 
 	}
 
@@ -301,13 +262,7 @@ void move(float error_tolerance){
 		velocity_publisher.publish(vel_msg);
 		x_error = getDistance(robot_odom.pose.pose.position.x,robot_odom.pose.pose.position.y,goal_pose.x,goal_pose.y);
 		
-		vel_msg.linear.x = 0.6*x_error;
-
-
-		//SATURATION
-		if(abs(vel_msg.linear.x)>0.3){
-			vel_msg.linear.x = 0.3*(vel_msg.linear.x)/abs(vel_msg.linear.x);
-		}
+		vel_msg.linear.x = 0.3;
 
 		
 
@@ -322,8 +277,6 @@ void move(float error_tolerance){
 
 
 void rotate(float angular_tolerance){
-
-	ROS_INFO("rotate");
 
 	geometry_msgs::Twist vel_msg;
 
@@ -340,9 +293,6 @@ void rotate(float angular_tolerance){
 
 	ros::Rate loop_rate(10);
 	do{
-
-		// rotação sem verificação de colisão pois impede de fazer tudo
-
 		velocity_publisher.publish(vel_msg);
 		error_yaw = (atan2(goal_pose.y-robot_odom.pose.pose.position.y,goal_pose.x - robot_odom.pose.pose.position.x)-robot_odom.pose.pose.orientation.z);
 		vel_msg.angular.z = 2.0*error_yaw;
@@ -362,7 +312,40 @@ void rotate(float angular_tolerance){
 
 }
 
+//**move e rotaciona
 
+void move_and_rotate(void){
+
+	geometry_msgs::Twist vel_msg;
+
+
+	vel_msg.linear.y = 0;
+	vel_msg.linear.z = 0;
+
+	//angular
+	vel_msg.angular.x = 0;
+	vel_msg.angular.y = 0;
+
+
+	float error_yaw = (atan2(goal_pose.y-robot_odom.pose.pose.position.y,goal_pose.x - robot_odom.pose.pose.position.x)-robot_odom.pose.pose.orientation.z);
+
+	float  x_error = getDistance(robot_odom.pose.pose.position.x,robot_odom.pose.pose.position.y,goal_pose.x,goal_pose.y);
+
+	vel_msg.angular.z = 2.0*error_yaw;
+
+	vel_msg.linear.x = 0.6*x_error;
+
+	if(abs(vel_msg.angular.z) > 0.4){
+		vel_msg.angular.z = (vel_msg.angular.z)/abs(vel_msg.angular.z)*0.4;
+	}
+
+	if(abs(vel_msg.linear.x)>0.3){
+		vel_msg.linear.x = 0.3*(vel_msg.linear.x)/abs(vel_msg.linear.x);
+	}
+
+	velocity_publisher.publish(vel_msg);
+
+}
 
 
 /**
@@ -381,14 +364,6 @@ void poseCallback(const nav_msgs::Odometry::ConstPtr & pose_message){
 	robot_odom.pose.pose.position.x=pose_message->pose.pose.position.x;
 	robot_odom.pose.pose.position.y=pose_message->pose.pose.position.y;
 	robot_odom.pose.pose.orientation.z=tf::getYaw(pose_message->pose.pose.orientation);
-
-	double dist;
-
-	dist = getDistance(past_x[0],past_y[0],robot_odom.pose.pose.position.x,robot_odom.pose.pose.position.y);
-
-	if(dist > 0.15){
-		att_past();
-	}
 }
 
 
@@ -439,6 +414,57 @@ void moveGoal(double distance_tolerance){
 	
 	//ROS_INFO("End of moving goal");
 	
+	vel_msg.linear.x = 0;
+	vel_msg.angular.z = 0;
+	velocity_publisher.publish(vel_msg);
+
+}
+
+// ** implemented by Matheus Abrantes in 05/30/18 
+void move_both(double distance_tolerance){
+	
+	geometry_msgs::Twist vel_msg;
+
+
+	float x_error, error_yaw;
+
+
+	ros::Rate loop_rate(10);
+	do{
+		/******** Proportional Controller ********/
+		//linear velocity in the x-axis
+		x_error = getDistance(robot_odom.pose.pose.position.x,robot_odom.pose.pose.position.y,goal_pose.x,goal_pose.y);
+		vel_msg.linear.y = 0;
+		vel_msg.linear.z = 0;
+		//angular velocity int he z-axis
+		vel_msg.angular.x = 0;
+		vel_msg.angular.y = 0;
+		error_yaw = (atan2(goal_pose.y-robot_odom.pose.pose.position.y,goal_pose.x - robot_odom.pose.pose.position.x)-robot_odom.pose.pose.orientation.z);
+
+
+		vel_msg.angular.z = 2.0*error_yaw;
+
+		vel_msg.linear.x = 0.6*x_error;
+
+		if(abs(vel_msg.angular.z) > 0.4){
+			vel_msg.angular.z = (vel_msg.angular.z)/abs(vel_msg.angular.z)*0.4;
+		}
+
+		if(abs(vel_msg.linear.x)>0.3){
+			vel_msg.linear.x = 0.3*(vel_msg.linear.x)/abs(vel_msg.linear.x);
+		}
+
+
+		check_pass();
+
+
+		velocity_publisher.publish(vel_msg);
+
+		ros::spinOnce();
+		loop_rate.sleep();
+
+	}while(getDistance(robot_odom.pose.pose.position.x,robot_odom.pose.pose.position.y,goal_pose.x,goal_pose.y)>distance_tolerance && free_pass == 1);
+	cout<<"end move goal"<<endl;
 	vel_msg.linear.x = 0;
 	vel_msg.angular.z = 0;
 	velocity_publisher.publish(vel_msg);
