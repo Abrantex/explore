@@ -218,21 +218,23 @@ void write_file(int Goal_Count,float goalX , float goalY){
 		exit(1);
 	}
 
-	//myfile << "[" << Goal_Count << "]Goal: [" << a << "],["<< b <<"] - Past: [";
-	myfile << "[" <<Goal_Count<<"]Goal - Pose - PastX - PastY: ";
-	myfile << goalX <<","<< goalY << " - ";
-	myfile << robot_odom.pose.pose.position.x << "," << robot_odom.pose.pose.position.y<< " - ";
+	
+	myfile << "pose(:," << Goal_Count << ")=[" << robot_odom.pose.pose.position.x << ";" << robot_odom.pose.pose.position.y << "];";
+	myfile << "goal(:," << Goal_Count << ")=[" << goalX << ";" << goalY << "];";
 
 
-
+	myfile << "pastx(:," << Goal_Count << ")=[";
+	
 	for(n = 0;n<10;n++){
-		myfile << past_x[n] <<",";
+		myfile << past_x[n] <<";";
 	}
-	myfile<<" - ";
+
+	myfile<<"]; pasty(:," <<Goal_Count << ")=[";
+	
 	for(n = 0;n<10;n++){
-		myfile << past_y[n] <<",";
+		myfile << past_y[n] <<";";
 	}
-	myfile<<endl;							
+	myfile<<"];"<<endl;							
   
   	myfile.close();
 
