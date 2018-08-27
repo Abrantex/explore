@@ -1,7 +1,7 @@
 /*
  * Author: Matheus Abrantes
- * Created: 03/26/18
- * Last Modification: 08/20/18
+ * Created: 08/27/18
+ * Last Modification: 08/27/18
  *
  *
  * Based on robot cleanner in the course CS460 (/tuto_ws/src/teste_turlesim/robot_cleaner.cpp)
@@ -23,6 +23,9 @@
 
 #include <fstream> //for file
 
+//for free pass
+#include "std_msgs/Int8.h"
+
 using namespace std;
 
 ros::Publisher velocity_publisher;
@@ -34,8 +37,7 @@ nav_msgs::Odometry robot_odom;
 //Matheus- set goal:
 turtlesim::Pose goal_pose;
 nav_msgs::Odometry odom_goal;
-ros::Subscriber scan_subscriber;
-sensor_msgs::LaserScan the_scan;
+ros::Subscriber freepass_subscriber;
 
 int free_pass = 1;
 
@@ -55,14 +57,11 @@ float past_y[10] = {0.0,0.0,0.0,0.0,0.0};
 
 double degrees2radians(double angle_in_degrees);
 void poseCallback(const nav_msgs::Odometry::ConstPtr & pose_message);
-void goalCallback(const sensor_msgs::LaserScan::ConstPtr& msg);
+void freeCallback(const std_msgs::Int8::ConstPtr& msg);
 
 
 double getDistance(double x1, double y1, double x2, double y2);
 void moveGoal(double distance_tolerance);
-
-// funcao que utiliza o laser_scan para verificar caminho a frente do robo
-void check_pass(void);
 
 void rotate (float angular_tolerance);
 void move(float error_tolerance);
@@ -91,7 +90,7 @@ int main(int argc, char **argv)
 	int Goal_Count = 1;
 
 	
-	scan_subscriber = n.subscribe("/kinect_scan", 10, goalCallback);
+	freepass_subscriber = n.subscribe("/free_topic", 10, freeCallback);
 	velocity_publisher = n.advertise<geometry_msgs::Twist>("/cmd_vel", 1000);
 	pose_subscriber = n.subscribe("/pose", 10, poseCallback);
 	
@@ -294,7 +293,6 @@ void move(float error_tolerance){
 	do{
 
 		//colision avoidance
-		check_pass();
 		if(free_pass == 0){
 			return;
 		}
@@ -419,7 +417,7 @@ void moveGoal(double distance_tolerance){
 	float error_yaw = 100.0,error_x = 100.0, error_x_i = 1000.0;
 
 
-	free_pass = 1;
+	//free_pass = 1;
 
 	// valores iniciais
 	vel_msg.linear.x = 0;
@@ -453,67 +451,14 @@ void moveGoal(double distance_tolerance){
 
 
 
-// Matheus Abrantes: this function will subscriber at kinect scan and random a goal
+// Matheus Abrantes: 
 
-void goalCallback(const sensor_msgs::LaserScan::ConstPtr& msg){
+void freeCallback(const std_msgs::Int8::ConstPtr& msg){
 
-	the_scan = *msg;
-
-
-}
-
-
-
-
-
-
-void check_pass(void){
-
-
-	int conta, N;
-	float angle,range1,x,y;
-
-	float inflation = 0.7; //diameter of robot, inflation for collision
-
-	// NUMERO DE AMOSTRAS
-  	N = floor((the_scan.angle_max-the_scan.angle_min)/the_scan.angle_increment);
-
-
-	//para todo o range:
-	for(conta=0;conta<N;conta++){
-
-      angle = the_scan.angle_min+conta*the_scan.angle_increment;
-
-      range1 = the_scan.ranges[conta];
-
-      
-      if(!isnan(range1)){
-        
-        x = range1*cos(angle);
-        y = range1*sin(angle);
-
-
-        if ( 	x < (inflation/1.2) && x > -(inflation/1.2)  && !isnan(x)){
-
-        	if( y < inflation ){
-        		// se a distancia for menor que 0.7
-
-
-
-
-
-	        	ROS_INFO("free_pass = 0 ---- [x,y] = [%f,%f], robot-goal = [%f,%f] , ",x,y,goal_pose.x-robot_odom.pose.pose.position.x,goal_pose.y-robot_odom.pose.pose.position.y);
-	        	free_pass = 0;
-
-	        	break;
-	        }
-        }
-      }
-
-    }
-
-
-
-
+	free_pass = msg->data;
+	if(free_pass == 0){
+		ROS_INFO("FREE PASS = 0");
+	}
 
 }
+

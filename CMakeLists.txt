@@ -14,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib
   move_base_msgs
   tf
+  pcl_conversions
+  pcl_ros
 )
 
 ## System dependencies are found with CMake's conventions
@@ -125,7 +127,6 @@ include_directories(
 
 add_executable(listener src/listener.cpp)
 target_link_libraries(listener ${catkin_LIBRARIES})
-add_dependencies(listener explore_generate_messages_cpp)
 
 add_executable(simp_send src/simp_send.cpp)
 target_link_libraries(simp_send ${catkin_LIBRARIES})
@@ -144,3 +145,11 @@ target_link_libraries(sonar_list ${catkin_LIBRARIES})
 
 add_executable(longest_path src/longest_path.cpp)
 target_link_libraries(longest_path ${catkin_LIBRARIES})
+
+add_executable(random_walk_full src/random_walk_full.cpp)
+target_link_libraries(random_walk_full ${catkin_LIBRARIES})
+
+add_executable(free_pass_node src/free_pass_node.cpp)
+target_link_libraries(free_pass_node
+   ${catkin_LIBRARIES}
+ )

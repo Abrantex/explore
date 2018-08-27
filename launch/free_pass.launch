@@ -1,0 +1,15 @@
+<launch>
+
+  <node pkg ="pcl_basics" type="example_voxel"  name="voxel1" >
+  	<!--param name="input" value="/camera/depth/points" /-->
+  	<remap from="input" to="/kinect/kinect/depth/points"/>
+  </node>
+  
+  <node pkg ="explore" type="free_pass_node"  name="free_pass1" >
+  	<!--param name="input" value="/camera/depth/points" /-->
+  	<remap from="input" to="/output_voxel"/>
+  	<remap from="output" to="/free_topic" />
+  </node>
+
+
+</launch>
