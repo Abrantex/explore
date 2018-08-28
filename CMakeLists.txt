@@ -153,3 +153,6 @@ add_executable(free_pass_node src/free_pass_node.cpp)
 target_link_libraries(free_pass_node
    ${catkin_LIBRARIES}
  )
+
+add_executable(longest_path_full src/longest_path_full.cpp)
+target_link_libraries(longest_path_full ${catkin_LIBRARIES})
