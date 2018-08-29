@@ -14,6 +14,7 @@ ros::Publisher pub;
 ros::Subscriber cloudSub;
 ros::Subscriber sonarSub;
 p2os_msgs::SonarArray sonar_array;
+int sonar_mode;
 
 int cloudFree,sonarFree,pathFree;
 
@@ -92,7 +93,42 @@ void sonar_cb(const p2os_msgs::SonarArray::ConstPtr& msg){
 
   sonar_array = *msg;
 
-  sonarFree = check_pass_sonar();
+  sonarFree = 1;
+
+  int N = 8, count =0;
+
+  float range,range2,threshold,threshold_minor = 0.25;
+  threshold = 0.5;
+
+  // do sonar 3 ao 6
+  for(count = 2;count<6;count++){
+    range = sonar_array.ranges[count];
+    if (range < threshold){
+    //se distancia[i] menor que limiar
+      sonarFree = 0;
+      break;
+    }
+  }
+  
+  for(count = 0;count<2;count++){
+    range = sonar_array.ranges[count];
+
+    range2 = sonar_array.ranges[count + 6];
+
+    if (range < threshold_minor || range2 < threshold_minor){
+    //se distancia[i] menor que limiar
+      sonarFree = 0;
+      break;
+    }
+  }
+
+
+
+
+
+  //sonarFree = check_pass_sonar();
+  ROS_INFO("Sonar: %f,%d,%d",sonar_array.ranges[2],sonarFree,sonar_mode);
+
 
 }
 
@@ -101,15 +137,15 @@ int main (int argc, char** argv){
 
   std_msgs::Int8 free_pass_msg;
 
-  int sonar_mode;
+  //int sonar_mode;
 
 
   // Initialize ROS
   ros::init (argc, argv, "free_pass_node");
-  ros::NodeHandle nh;
+  ros::NodeHandle nh("~");
 
 
-  nh.param<int>("sonar",sonar_mode,0);
+  nh.param<int>("sonar_mode",sonar_mode,0);
 
 
   // Create a ROS subscriber for the input point cloud
@@ -119,7 +155,12 @@ int main (int argc, char** argv){
   pub = nh.advertise<std_msgs::Int8> ("output", 1);
 
   //subscriber para o sonar
-  sonarSub = nh.subscribe ("sonar",1,sonar_cb);
+  sonarSub = nh.subscribe ("sonar",1000,sonar_cb);
+
+
+  sonarFree = 1;
+  cloudFree= sonar_mode;
+
 
 
   ros::Rate loop_rate(5);

@@ -8,9 +8,10 @@
   
   <node pkg ="explore" type="free_pass_node"  name="free_pass1" >
   	<!--param name="input" value="/camera/depth/points" /-->
-  	<remap from="input" to="/output_voxel"/>
-  	<remap from="output" to="free_topic" />
-  	<param name="sonar" value="1"/>
+  	<remap from="free_pass1/input" to="/output_voxel"/>
+    <remap from="free_pass1/sonar" to="/sonar"/>
+  	<remap from="free_pass1/output" to="free_topic" />
+  	<param name="sonar_mode" value="1"/>
   </node>
 
 
