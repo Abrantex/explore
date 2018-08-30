@@ -98,7 +98,7 @@ void sonar_cb(const p2os_msgs::SonarArray::ConstPtr& msg){
   int N = 8, count =0;
 
   float range,range2,threshold,threshold_minor = 0.20,sonar_min = 100.0;
-  threshold = 0.25;
+  threshold = 0.5;
 
   // do sonar 3 ao 6
   for(count = 2;count<6;count++){

@@ -263,7 +263,7 @@ void move(float error_tolerance){
 		velocity_publisher.publish(vel_msg);
 		x_error = getDistance(robot_odom.pose.pose.position.x,robot_odom.pose.pose.position.y,goal_pose.x,goal_pose.y);
 		
-		vel_msg.linear.x = 0.08;
+		vel_msg.linear.x = 0.2;
 
 		
 
