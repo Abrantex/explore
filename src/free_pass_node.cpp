@@ -97,8 +97,8 @@ void sonar_cb(const p2os_msgs::SonarArray::ConstPtr& msg){
 
   int N = 8, count =0;
 
-  float range,range2,threshold,threshold_minor = 0.25;
-  threshold = 0.5;
+  float range,range2,threshold,threshold_minor = 0.20,sonar_min = 100.0;
+  threshold = 0.25;
 
   // do sonar 3 ao 6
   for(count = 2;count<6;count++){
@@ -108,9 +108,12 @@ void sonar_cb(const p2os_msgs::SonarArray::ConstPtr& msg){
       sonarFree = 0;
       break;
     }
+    if(range <sonar_min){
+      sonar_min = range;
+    }
   }
   
-  for(count = 0;count<2;count++){
+  /*for(count = 0;count<2;count++){
     range = sonar_array.ranges[count];
 
     range2 = sonar_array.ranges[count + 6];
@@ -120,14 +123,20 @@ void sonar_cb(const p2os_msgs::SonarArray::ConstPtr& msg){
       sonarFree = 0;
       break;
     }
-  }
+    if(range <sonar_min){
+      sonar_min = range;
+    }
+    if(range2 <sonar_min){
+      sonar_min = range2;
+    }
+  }*/
 
 
 
 
 
   //sonarFree = check_pass_sonar();
-  ROS_INFO("Sonar: %f,%d,%d",sonar_array.ranges[2],sonarFree,sonar_mode);
+  ROS_INFO("Sonar: %f,%d,%d",sonar_min,sonarFree,sonar_mode);
 
 
 }
@@ -159,7 +168,7 @@ int main (int argc, char** argv){
 
 
   sonarFree = 1;
-  cloudFree= sonar_mode;
+  cloudFree= 1;
 
 
 
@@ -170,6 +179,8 @@ int main (int argc, char** argv){
     free_pass_msg.data = cloudFree;
     if (sonar_mode == 1){
       free_pass_msg.data = cloudFree*sonarFree;
+    }else if(sonar_mode == 2){
+      free_pass_msg.data  = sonarFree;
     }
 
 
